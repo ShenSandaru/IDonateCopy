@@ -121,7 +121,7 @@ pub fn generate_unique_id(
 ) -> ByteArray {
   let timestamp_bytes = builtin.serialise_data(timestamp)
   let combined = bytearray.concat(primary, bytearray.concat(secondary, timestamp_bytes))
-  hash.blake2b_256(combined)
+  blake2b_256(combined)
 }
 
 // Validate donation purpose categories

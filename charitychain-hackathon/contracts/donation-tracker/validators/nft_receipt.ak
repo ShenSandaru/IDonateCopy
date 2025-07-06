@@ -6,8 +6,9 @@ use aiken/crypto.{blake2b_224, blake2b_256}
 use aiken/collection/list
 use aiken/option
 use cardano/transaction.{
-  Input, Output, ScriptContext, Spend, Transaction, TransactionId, Mint,
+  Input, Output, Transaction, TransactionId,
 }
+use cardano/script_context.{ScriptContext, Spend, Mint}
 use cardano/address.{
   Address, Inline, PaymentCredential, ScriptCredential,
 }

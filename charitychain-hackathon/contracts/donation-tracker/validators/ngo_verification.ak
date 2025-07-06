@@ -6,8 +6,9 @@ use aiken/crypto.{blake2b_224}
 use aiken/collection/list
 use aiken/option
 use cardano/transaction.{
-  Input, Output, ScriptContext, Spend, Transaction, TransactionId,
+  Input, Output, Transaction, TransactionId,
 }
+use cardano/script_context.{ScriptContext, ScriptInfo}
 use cardano/address.{
   Address, Inline, PaymentCredential, ScriptCredential,
 }
@@ -77,10 +78,10 @@ pub fn ngo_verification_validator(
   redeemer: NGORedeemer,
   ctx: ScriptContext,
 ) -> Bool {
-  let ScriptContext { transaction, purpose } = ctx
+  let ScriptContext { transaction, info, .. } = ctx
 
-  when purpose is {
-    Spend(own_ref) -> {
+  when info is {
+    Spending { output, datum: _ } -> {
       when redeemer is {
         RegisterNGO -> validate_ngo_registration(datum, transaction)
         UpdateNGOInfo { new_name, new_description, new_categories } -> 

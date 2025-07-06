@@ -6,8 +6,9 @@ use aiken/crypto.{blake2b_224, blake2b_256}
 use aiken/collection/list
 use aiken/option
 use cardano/transaction.{
-  Input, Output, ScriptContext, Spend, Transaction, TransactionId,
+  Input, Output, Transaction, TransactionId,
 }
+use cardano/script_context.{ScriptContext, ScriptInfo}
 use cardano/address.{
   Address, Inline, PaymentCredential, ScriptCredential,
 }
@@ -51,10 +52,10 @@ pub fn donation_validator(
   redeemer: DonationRedeemer,
   ctx: ScriptContext,
 ) -> Bool {
-  let ScriptContext { transaction, purpose } = ctx
+  let ScriptContext { transaction, info, .. } = ctx
 
-  when purpose is {
-    Spend(own_ref) -> {
+  when info is {
+    Spending { output, datum: _ } -> {
       when redeemer is {
         CreateDonation -> validate_donation_creation(datum, transaction)
         UpdateAllocation { new_allocation } -> 
