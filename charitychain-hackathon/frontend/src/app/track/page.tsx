@@ -4,7 +4,7 @@ import { useState } from 'react'
 const mockDonations = [
   {
     id: 'DON-2024-001',
-    ngo: 'Global Health Initiative',
+    ngo: 'Iranian Healthcare Foundation',
     amount: '50 ADA',
     date: '2024-01-15',
     status: 'Active',
@@ -14,16 +14,18 @@ const mockDonations = [
       admin: 5
     },
     spending: [
-      { date: '2024-01-16', amount: '30 ADA', purpose: 'Medical supplies purchase', category: 'aid' },
-      { date: '2024-01-18', amount: '8 ADA', purpose: 'Transportation to remote areas', category: 'logistics' },
-      { date: '2024-01-20', amount: '5 ADA', purpose: 'Field coordinator salary', category: 'logistics' }
+      { date: '2024-01-16', amount: '30 ADA', purpose: 'Medical supplies for Tehran clinic', category: 'aid' },
+      { date: '2024-01-18', amount: '8 ADA', purpose: 'Transportation to rural Fars province', category: 'logistics' },
+      { date: '2024-01-20', amount: '5 ADA', purpose: 'Local coordinator salary', category: 'logistics' }
     ],
     remaining: '7 ADA',
-    txHash: 'a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890'
+    txHash: 'a1b2c3d4e5f6789012345678901234567890123456789012345678901234567890',
+    impact: '15 patients treated in Tehran',
+    province: 'Tehran'
   },
   {
     id: 'DON-2024-002',
-    ngo: 'Education for All',
+    ngo: 'Education Support Iran',
     amount: '100 ADA',
     date: '2024-01-10',
     status: 'Completed',
@@ -33,14 +35,37 @@ const mockDonations = [
       admin: 5
     },
     spending: [
-      { date: '2024-01-11', amount: '70 ADA', purpose: 'School construction materials', category: 'aid' },
+      { date: '2024-01-11', amount: '70 ADA', purpose: 'School construction materials in Isfahan', category: 'aid' },
       { date: '2024-01-12', amount: '10 ADA', purpose: 'Teacher training program', category: 'aid' },
-      { date: '2024-01-13', amount: '10 ADA', purpose: 'Material transportation', category: 'logistics' },
-      { date: '2024-01-14', amount: '5 ADA', purpose: 'Project management', category: 'logistics' },
-      { date: '2024-01-15', amount: '5 ADA', purpose: 'Administrative costs', category: 'admin' }
+      { date: '2024-01-13', amount: '10 ADA', purpose: 'Material transportation to schools', category: 'logistics' },
+      { date: '2024-01-14', amount: '5 ADA', purpose: 'Project management costs', category: 'logistics' },
+      { date: '2024-01-15', amount: '5 ADA', purpose: 'Administrative expenses', category: 'admin' }
     ],
     remaining: '0 ADA',
-    txHash: 'b2c3d4e5f6789012345678901234567890123456789012345678901234567890a1'
+    txHash: 'b2c3d4e5f6789012345678901234567890123456789012345678901234567890a1',
+    impact: '35 students received educational materials',
+    province: 'Isfahan'
+  },
+  {
+    id: 'DON-2024-003',
+    ngo: 'Iran Food Security Network',
+    amount: '75 ADA',
+    date: '2024-01-12',
+    status: 'Active',
+    allocation: {
+      aid: 82,
+      logistics: 13,
+      admin: 5
+    },
+    spending: [
+      { date: '2024-01-13', amount: '45 ADA', purpose: 'Emergency food packages for families', category: 'aid' },
+      { date: '2024-01-15', amount: '12 ADA', purpose: 'Distribution to remote villages', category: 'logistics' },
+      { date: '2024-01-17', amount: '8 ADA', purpose: 'Warehouse and storage costs', category: 'logistics' }
+    ],
+    remaining: '10 ADA',
+    txHash: 'c3d4e5f6789012345678901234567890123456789012345678901234567890a1b2',
+    impact: '25 families fed in rural Kurdistan',
+    province: 'Kurdistan'
   }
 ]
 
@@ -75,8 +100,12 @@ export default function TrackPage() {
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Track Your Donations</h1>
-          <p className="text-xl text-gray-600">Monitor how your donations are being used in real-time</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            🇮🇷 Track Your Iran Donations
+          </h1>
+          <p className="text-xl text-gray-600">
+            Monitor how your contributions are helping Iranian families and communities in real-time
+          </p>
         </div>
 
         {/* Search Bar */}
@@ -119,7 +148,9 @@ export default function TrackPage() {
                           {donation.status}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{donation.ngo}</p>
+                      <p className="text-sm text-gray-600 mb-1">{donation.ngo}</p>
+                      <p className="text-xs text-blue-600 mb-1">📍 {donation.province} Province</p>
+                      <p className="text-xs text-green-600 mb-2">✅ {donation.impact}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-blue-600">{donation.amount}</span>
                         <span className="text-sm text-gray-500">{donation.date}</span>
