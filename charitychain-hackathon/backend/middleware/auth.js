@@ -40,14 +40,14 @@ const requireNGO = (req, res, next) => {
   next()
 }
 
-export const requireVerifiedNGO = (req, res, next) => {
+const requireVerifiedNGO = (req, res, next) => {
   if (!req.user || req.user.userType !== 'ngo' || req.user.verificationStatus !== 'verified') {
     return res.status(403).json({ error: 'Verified NGO access required' })
   }
   next()
 }
 
-export const generateToken = (userId, walletAddress, userType) => {
+const generateToken = (userId, walletAddress, userType) => {
   return jwt.sign(
     { 
       userId, 
@@ -59,7 +59,7 @@ export const generateToken = (userId, walletAddress, userType) => {
   )
 }
 
-export const verifyWalletSignature = async (req, res, next) => {
+const verifyWalletSignature = async (req, res, next) => {
   try {
     const { walletAddress, signature, message } = req.body
 
@@ -85,7 +85,7 @@ export const verifyWalletSignature = async (req, res, next) => {
   }
 }
 
-export const rateLimitByWallet = (req, res, next) => {
+const rateLimitByWallet = (req, res, next) => {
   // Simple rate limiting by wallet address
   // In production, use Redis or a proper rate limiting service
   const walletAddress = req.body.walletAddress || req.params.walletAddress
@@ -102,3 +102,13 @@ export const rateLimitByWallet = (req, res, next) => {
   // In production, implement proper rate limiting
   next()
 }
+
+module.exports = {
+  authenticateToken,
+  requireAdmin,
+  requireNGO,
+  requireVerifiedNGO,
+  generateToken,
+  verifyWalletSignature,
+  rateLimitByWallet
+};
