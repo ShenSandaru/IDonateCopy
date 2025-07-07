@@ -109,5 +109,6 @@ module.exports = {
   requireNGO,
   requireVerifiedNGO,
   generateToken,
-  walletRateLimit
+  verifyWalletSignature,
+  rateLimitByWallet
 };
