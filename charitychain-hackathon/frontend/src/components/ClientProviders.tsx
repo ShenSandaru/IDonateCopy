@@ -1,6 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
+import { MeshProvider } from '@meshsdk/react'
 
 interface ClientProvidersProps {
   children: ReactNode
@@ -8,8 +9,8 @@ interface ClientProvidersProps {
 
 export default function ClientProviders({ children }: ClientProvidersProps) {
   return (
-    <div>
+    <MeshProvider>
       {children}
-    </div>
+    </MeshProvider>
   )
 }

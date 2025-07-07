@@ -1,5 +1,7 @@
 'use client'
 import { useState } from 'react'
+import { useWallet } from '@meshsdk/react'
+import DonationTransaction from '@/components/DonationTransaction'
 
 const mockNGOs = [
   {
@@ -65,25 +67,25 @@ const mockNGOs = [
 ]
 
 export default function DonatePage() {
+  const { connected } = useWallet()
   const [selectedNGO, setSelectedNGO] = useState(mockNGOs[0])
   const [donationAmount, setDonationAmount] = useState('')
   const [message, setMessage] = useState('')
   const [isAnonymous, setIsAnonymous] = useState(false)
+  const [txSuccess, setTxSuccess] = useState<string | null>(null)
+  const [txError, setTxError] = useState<string | null>(null)
 
-  const handleDonate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!donationAmount || parseFloat(donationAmount) <= 0) {
-      alert('Please enter a valid donation amount')
-      return
-    }
-
-    // Simulate donation process
-    alert(`Donation of ${donationAmount} ADA to ${selectedNGO.name} initiated! This would connect to your Cardano wallet.`)
-    
+  const handleDonationSuccess = (txHash: string) => {
+    setTxSuccess(txHash)
+    setTxError(null)
     // Reset form
     setDonationAmount('')
     setMessage('')
+  }
+
+  const handleDonationError = (error: string) => {
+    setTxError(error)
+    setTxSuccess(null)
   }
 
   const getUrgencyColor = (urgency: string) => {
@@ -173,13 +175,32 @@ export default function DonatePage() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Donation Details</h2>
             
-            <form onSubmit={handleDonate} className="space-y-6">
+            <div className="space-y-6">
               {/* Selected NGO Info */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-2">Donating to:</h3>
                 <p className="text-blue-600 font-medium">{selectedNGO.name}</p>
                 <p className="text-sm text-gray-600">{selectedNGO.description}</p>
+                <p className="text-xs text-gray-500 mt-2">📍 {selectedNGO.location}</p>
               </div>
+
+              {/* Transaction Success/Error Messages */}
+              {txSuccess && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-green-900 mb-2">🎉 Donation Successful!</h4>
+                  <p className="text-green-800 text-sm mb-2">
+                    Thank you for supporting {selectedNGO.name}! Your donation will help Iranian families.
+                  </p>
+                  <p className="text-xs text-green-700">Transaction Hash: {txSuccess}</p>
+                </div>
+              )}
+
+              {txError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-red-900 mb-2">❌ Transaction Failed</h4>
+                  <p className="text-red-800 text-sm">{txError}</p>
+                </div>
+              )}
 
               {/* Donation Amount */}
               <div>
@@ -277,14 +298,15 @@ export default function DonatePage() {
                 </div>
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-              >
-                Connect Wallet & Donate
-              </button>
-            </form>
+              {/* Blockchain Transaction Component */}
+              <DonationTransaction
+                ngoAddress={`addr_test_${selectedNGO.name.toLowerCase().replace(/\s+/g, '_')}_wallet`}
+                donationAmount={donationAmount}
+                ngoName={selectedNGO.name}
+                onSuccess={handleDonationSuccess}
+                onError={handleDonationError}
+              />
+            </div>
 
             {/* Security Notice */}
             <div className="mt-6 p-4 bg-green-50 rounded-lg">
