@@ -1,8 +1,8 @@
 import express from 'express';
-const { NgoVerification, User } = require('../models/index.js');
-const { authenticateToken, requireAdmin } = require('../middleware/auth.js');
-const { validateNgoVerificationData } = require('../utils/validation.js');
-const { uploadMiddleware, uploadFields } = require('../middleware/upload.js');
+import { NgoVerification, User } from '../models/index.js';
+import { authenticateToken, requireAdmin } from '../middleware/auth.js';
+import { validateNgoVerificationData } from '../utils/validation.js';
+import { uploadMiddleware, uploadFields } from '../middleware/upload.js';
 
 const router = express.Router();
 

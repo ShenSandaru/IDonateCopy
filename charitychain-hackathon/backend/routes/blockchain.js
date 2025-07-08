@@ -1,7 +1,7 @@
 import express from 'express';
-const { Transaction } = require('../models/index.js');
-const { blockfrostService } = require('../services/blockfrost.js');
-const { validateWalletAddress } = require('../utils/validation.js');
+import { Transaction } from '../models/index.js';
+import { blockfrostService } from '../services/blockfrost.js';
+import { validateWalletAddress } from '../utils/validation.js';
 
 const router = express.Router();
 

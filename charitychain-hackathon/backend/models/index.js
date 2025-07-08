@@ -4,9 +4,9 @@ import Donation from './Donation.js';
 import NgoVerification from './NgoVerification.js';
 import Transaction from './Transaction.js';
 
-export { 
-  User, 
-  Donation, 
-  NgoVerification, 
-  Transaction 
+export {
+  User,
+  Donation,
+  NgoVerification,
+  Transaction
 };

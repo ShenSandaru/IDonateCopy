@@ -1,15 +1,26 @@
 import mongoose from 'mongoose';
 
 const donationSchema = new mongoose.Schema({
-  donorAddress: {
-    type: String,
-    required: true,
-    trim: true
+  donor: {
+    walletAddress: {
+      type: String,
+      required: true
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
   },
-  ngoId: {
-    type: String,
-    required: true,
-    trim: true
+  recipient: {
+    walletAddress: {
+      type: String,
+      required: true
+    },
+    ngoId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    organizationName: String
   },
   amount: {
     type: Number,
@@ -18,40 +29,93 @@ const donationSchema = new mongoose.Schema({
   },
   currency: {
     type: String,
-    required: true,
     default: 'ADA'
   },
-  transactionHash: {
-    type: String,
-    required: true,
-    unique: true
+  blockchain: {
+    transactionHash: {
+      type: String,
+      required: true
+    },
+    blockNumber: Number,
+    blockHash: String,
+    timestamp: Date,
+    confirmations: {
+      type: Number,
+      default: 0
+    }
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'failed'],
+    enum: ['pending', 'confirmed', 'failed', 'completed'],
     default: 'pending'
   },
-  blockNumber: {
-    type: Number
+  nftReceipt: {
+    tokenId: String,
+    tokenAddress: String,
+    metadata: {
+      name: String,
+      description: String,
+      image: String,
+      attributes: [{
+        trait_type: String,
+        value: String
+      }]
+    },
+    ipfsHash: String
   },
-  metadata: {
-    message: String,
+  fundAllocation: {
+    // How the donation is distributed
+    directToNgo: {
+      type: Number,
+      default: 0
+    },
+    platformFee: {
+      type: Number,
+      default: 0
+    },
+    operationalCosts: {
+      type: Number,
+      default: 0
+    }
+  },
+  donationPurpose: {
+    type: String,
+    maxlength: 200
+  },
+  notes: {
+    type: String,
+    maxlength: 500
+  },
+  isAnonymous: {
+    type: Boolean,
+    default: false
+  },
+  trackingEnabled: {
+    type: Boolean,
+    default: true
+  },
+  spending: [{
+    date: {
+      type: Date,
+      default: Date.now
+    },
+    amount: Number,
     purpose: String,
-    tags: [String]
-  },
-  nftReceiptId: {
-    type: String
-  }
+    category: {
+      type: String,
+      enum: ['aid', 'logistics', 'admin']
+    }
+  }],
+  impact: String,
+  province: String
 }, {
   timestamps: true
 });
 
-// Indexes for efficient queries
-donationSchema.index({ donorAddress: 1 });
-donationSchema.index({ ngoId: 1 });
-donationSchema.index({ transactionHash: 1 });
+// Index for efficient queries  
+donationSchema.index({ 'donor.walletAddress': 1 });
+donationSchema.index({ 'recipient.walletAddress': 1 });
+donationSchema.index({ 'blockchain.transactionHash': 1 });
 donationSchema.index({ status: 1 });
-donationSchema.index({ createdAt: -1 });
 
-const Donation = mongoose.model('Donation', donationSchema);
-export default Donation;
+export default mongoose.model('Donation', donationSchema);

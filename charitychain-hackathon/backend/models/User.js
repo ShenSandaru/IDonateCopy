@@ -98,9 +98,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Index for efficient queries
-userSchema.index({ walletAddress: 1 });
-userSchema.index({ userType: 1 });
+userSchema.index({ walletAddress: 1, userType: 1 });
 userSchema.index({ verificationStatus: 1 });
 
-const User = mongoose.model('User', userSchema);
-export default User;
+export default mongoose.model('User', userSchema);

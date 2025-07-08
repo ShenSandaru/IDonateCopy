@@ -4,65 +4,63 @@ const transactionSchema = new mongoose.Schema({
   transactionHash: {
     type: String,
     required: true,
-    unique: true,
-    trim: true
+    unique: true
   },
-  fromAddress: {
+  blockNumber: Number,
+  blockHash: String,
+  transactionIndex: Number,
+  from: {
     type: String,
-    required: true,
-    trim: true
+    required: true
   },
-  toAddress: {
+  to: {
     type: String,
-    required: true,
-    trim: true
+    required: true
   },
-  amount: {
-    type: Number,
-    required: true,
-    min: 0
+  value: {
+    type: String, // Store as string to handle large numbers
+    required: true
   },
   fee: {
-    type: Number,
-    required: true,
-    min: 0
+    type: String
   },
-  blockNumber: {
-    type: Number,
+  gasUsed: String,
+  gasPrice: String,
+  timestamp: {
+    type: Date,
     required: true
-  },
-  blockHash: {
-    type: String,
-    required: true
-  },
-  status: {
-    type: String,
-    enum: ['pending', 'confirmed', 'failed'],
-    required: true
-  },
-  type: {
-    type: String,
-    enum: ['donation', 'nft_mint', 'transfer'],
-    required: true
-  },
-  metadata: {
-    type: mongoose.Schema.Types.Mixed
   },
   confirmations: {
     type: Number,
     default: 0
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'confirmed', 'failed'],
+    default: 'pending'
+  },
+  transactionType: {
+    type: String,
+    enum: ['donation', 'nft-mint', 'verification', 'withdrawal', 'other'],
+    required: true
+  },
+  relatedDonation: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Donation'
+  },
+  metadata: {
+    type: mongoose.Schema.Types.Mixed // Flexible metadata storage
   }
 }, {
   timestamps: true
-});
+})
 
-// Indexes
-transactionSchema.index({ transactionHash: 1 });
-transactionSchema.index({ fromAddress: 1 });
-transactionSchema.index({ toAddress: 1 });
-transactionSchema.index({ status: 1 });
-transactionSchema.index({ type: 1 });
-transactionSchema.index({ blockNumber: -1 });
+// Indexes for efficient queries
+transactionSchema.index({ transactionHash: 1 })
+transactionSchema.index({ from: 1 })
+transactionSchema.index({ to: 1 })
+transactionSchema.index({ timestamp: -1 })
+transactionSchema.index({ status: 1 })
+transactionSchema.index({ transactionType: 1 })
 
-const Transaction = mongoose.model('Transaction', transactionSchema);
-export default Transaction;
+export default mongoose.model('Transaction', transactionSchema);

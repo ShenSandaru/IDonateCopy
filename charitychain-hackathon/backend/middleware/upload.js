@@ -58,7 +58,7 @@ const upload = multer({
 })
 
 // Middleware for handling upload errors
-const handleUploadError = (error, req, res, next) => {
+export const handleUploadError = (error, req, res, next) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ error: 'File size too large. Maximum 10MB per file.' })
@@ -79,19 +79,19 @@ const handleUploadError = (error, req, res, next) => {
 }
 
 // Export upload middleware
-const uploadMiddleware = upload
+export const uploadMiddleware = upload
 
 // Single file upload
-const uploadSingle = (fieldName) => upload.single(fieldName)
+export const uploadSingle = (fieldName) => upload.single(fieldName)
 
 // Multiple files upload
-const uploadMultiple = (fieldName, maxCount = 5) => upload.array(fieldName, maxCount)
+export const uploadMultiple = (fieldName, maxCount = 5) => upload.array(fieldName, maxCount)
 
 // Multiple fields upload
-const uploadFields = (fields) => upload.fields(fields)
+export const uploadFields = (fields) => upload.fields(fields)
 
 // Serve uploaded files
-const serveUploads = (req, res, next) => {
+export const serveUploads = (req, res, next) => {
   const filename = req.params.filename
   const filePath = path.join(uploadsDir, filename)
   
@@ -112,7 +112,7 @@ const serveUploads = (req, res, next) => {
 }
 
 // Delete uploaded file
-const deleteUploadedFile = (filename) => {
+export const deleteUploadedFile = (filename) => {
   try {
     const filePath = path.join(uploadsDir, filename)
     if (fs.existsSync(filePath)) {
@@ -127,7 +127,7 @@ const deleteUploadedFile = (filename) => {
 }
 
 // Get file info
-const getFileInfo = (filename) => {
+export const getFileInfo = (filename) => {
   try {
     const filePath = path.join(uploadsDir, filename)
     if (fs.existsSync(filePath)) {
@@ -145,14 +145,3 @@ const getFileInfo = (filename) => {
     return null
   }
 }
-
-export {
-  uploadMiddleware,
-  uploadSingle,
-  uploadMultiple,
-  uploadFields,
-  handleUploadError,
-  serveUploads,
-  deleteUploadedFile,
-  getFileInfo
-};

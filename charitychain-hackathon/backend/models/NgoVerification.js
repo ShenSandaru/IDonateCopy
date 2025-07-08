@@ -2,77 +2,220 @@ import mongoose from 'mongoose';
 
 const ngoVerificationSchema = new mongoose.Schema({
   ngoId: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true
-  },
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  description: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
-  walletAddress: {
-    type: String,
-    required: true,
-    trim: true
+  organizationDetails: {
+    legalName: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    registrationNumber: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    taxId: {
+      type: String,
+      trim: true
+    },
+    establishedDate: Date,
+    registrationCountry: {
+      type: String,
+      required: true
+    },
+    organizationType: {
+      type: String,
+      enum: ['charity', 'foundation', 'non-profit', 'social-enterprise', 'other'],
+      required: true
+    },
+    focusAreas: [{
+      type: String,
+      enum: [
+        'education', 'healthcare', 'environment', 'poverty-alleviation',
+        'disaster-relief', 'human-rights', 'animal-welfare', 'community-development',
+        'technology-access', 'gender-equality', 'other'
+      ]
+    }],
+    description: {
+      type: String,
+      required: true,
+      maxlength: 1000
+    },
+    mission: {
+      type: String,
+      required: true,
+      maxlength: 500
+    },
+    vision: {
+      type: String,
+      maxlength: 500
+    }
   },
-  registrationNumber: {
-    type: String,
-    required: true,
-    trim: true
+  contactInformation: {
+    primaryContact: {
+      name: {
+        type: String,
+        required: true
+      },
+      title: String,
+      email: {
+        type: String,
+        required: true
+      },
+      phone: String
+    },
+    address: {
+      street: String,
+      city: String,
+      state: String,
+      country: {
+        type: String,
+        required: true
+      },
+      postalCode: String
+    },
+    website: {
+      type: String,
+      validate: {
+        validator: function(v) {
+          return /^https?:\/\/.+/.test(v)
+        },
+        message: 'Website must be a valid URL'
+      }
+    },
+    socialMedia: {
+      twitter: String,
+      facebook: String,
+      instagram: String,
+      linkedin: String
+    }
   },
-  country: {
-    type: String,
-    required: true,
-    default: 'Iran'
-  },
-  province: {
-    type: String,
-    trim: true
-  },
-  category: {
-    type: String,
-    enum: ['healthcare', 'education', 'food', 'shelter', 'emergency', 'other'],
-    required: true
+  documents: {
+    // KYC/AML compliance documents
+    registrationCertificate: {
+      filename: String,
+      fileUrl: String,
+      ipfsHash: String,
+      uploadDate: Date,
+      verified: {
+        type: Boolean,
+        default: false
+      }
+    },
+    taxExemptionCertificate: {
+      filename: String,
+      fileUrl: String,
+      ipfsHash: String,
+      uploadDate: Date,
+      verified: {
+        type: Boolean,
+        default: false
+      }
+    },
+    auditReports: [{
+      year: Number,
+      filename: String,
+      fileUrl: String,
+      ipfsHash: String,
+      uploadDate: Date,
+      verified: {
+        type: Boolean,
+        default: false
+      }
+    }],
+    boardOfDirectors: {
+      filename: String,
+      fileUrl: String,
+      ipfsHash: String,
+      uploadDate: Date,
+      verified: {
+        type: Boolean,
+        default: false
+      }
+    },
+    financialStatements: [{
+      year: Number,
+      filename: String,
+      fileUrl: String,
+      ipfsHash: String,
+      uploadDate: Date,
+      verified: {
+        type: Boolean,
+        default: false
+      }
+    }],
+    additionalDocuments: [{
+      documentType: String,
+      filename: String,
+      fileUrl: String,
+      ipfsHash: String,
+      uploadDate: Date,
+      verified: {
+        type: Boolean,
+        default: false
+      }
+    }]
   },
   verificationStatus: {
     type: String,
-    enum: ['pending', 'verified', 'rejected', 'suspended'],
+    enum: ['pending', 'under-review', 'verified', 'rejected', 'suspended'],
     default: 'pending'
   },
-  documents: [{
-    filename: String,
-    originalName: String,
-    size: Number,
-    uploadedAt: {
+  verificationHistory: [{
+    status: String,
+    date: {
       type: Date,
       default: Date.now
-    }
+    },
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    notes: String,
+    documentsReviewed: [String]
   }],
-  verifiedBy: {
+  complianceChecks: {
+    kycCompleted: {
+      type: Boolean,
+      default: false
+    },
+    amlCompleted: {
+      type: Boolean,
+      default: false
+    },
+    sanctionsListChecked: {
+      type: Boolean,
+      default: false
+    },
+    lastComplianceCheck: Date
+  },
+  blockchainVerification: {
+    onChainVerificationTx: String,
+    verificationTokenId: String,
+    verificationDate: Date,
+    smartContractAddress: String
+  },
+  adminNotes: {
     type: String,
-    trim: true
+    maxlength: 1000
   },
-  verifiedAt: {
-    type: Date
+  applicationDate: {
+    type: Date,
+    default: Date.now
   },
-  rejectionReason: {
-    type: String
-  }
+  verificationDate: Date,
+  expiryDate: Date // For verification renewal
 }, {
   timestamps: true
-});
+})
 
-// Indexes
-ngoVerificationSchema.index({ ngoId: 1 });
-ngoVerificationSchema.index({ verificationStatus: 1 });
-ngoVerificationSchema.index({ country: 1 });
-ngoVerificationSchema.index({ category: 1 });
+// Indexes for efficient queries
+ngoVerificationSchema.index({ ngoId: 1 })
+ngoVerificationSchema.index({ verificationStatus: 1 })
+ngoVerificationSchema.index({ 'organizationDetails.registrationNumber': 1 })
+ngoVerificationSchema.index({ applicationDate: -1 })
 
-const NgoVerification = mongoose.model('NgoVerification', ngoVerificationSchema);
-export default NgoVerification;
+export default mongoose.model('NgoVerification', ngoVerificationSchema);
