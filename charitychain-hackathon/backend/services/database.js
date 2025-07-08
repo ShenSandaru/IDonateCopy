@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 class DatabaseService {
   constructor() {
@@ -145,4 +145,4 @@ class DatabaseService {
 
 const databaseService = new DatabaseService();
 
-module.exports = { databaseService };
+export { databaseService };

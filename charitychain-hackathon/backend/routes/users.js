@@ -1,7 +1,7 @@
-const express = require('express');
-const { User } = require('../models/index.js');
-const { validateWalletAddress } = require('../utils/validation.js');
-const { authenticateToken } = require('../middleware/auth.js');
+import express from 'express';
+import { User } from '../models/index.js';
+import { validateWalletAddress } from '../utils/validation.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -258,4 +258,4 @@ router.get('/:walletAddress/donations', async (req, res) => {
   }
 })
 
-module.exports = router;
+export default router;

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const ngoVerificationSchema = new mongoose.Schema({
   ngoId: {
@@ -218,4 +218,4 @@ ngoVerificationSchema.index({ verificationStatus: 1 })
 ngoVerificationSchema.index({ 'organizationDetails.registrationNumber': 1 })
 ngoVerificationSchema.index({ applicationDate: -1 })
 
-module.exports = mongoose.model('NgoVerification', ngoVerificationSchema);
+export default mongoose.model('NgoVerification', ngoVerificationSchema);

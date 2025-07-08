@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
   walletAddress: {
@@ -98,8 +98,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Index for efficient queries
-userSchema.index({ walletAddress: 1 });
-userSchema.index({ userType: 1 });
+userSchema.index({ walletAddress: 1, userType: 1 });
 userSchema.index({ verificationStatus: 1 });
 
-module.exports = mongoose.model('User', userSchema);
+export default mongoose.model('User', userSchema);
