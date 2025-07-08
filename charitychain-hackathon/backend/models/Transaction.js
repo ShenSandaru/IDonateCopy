@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const transactionSchema = new mongoose.Schema({
   transactionHash: {
@@ -63,4 +63,4 @@ transactionSchema.index({ timestamp: -1 })
 transactionSchema.index({ status: 1 })
 transactionSchema.index({ transactionType: 1 })
 
-module.exports = mongoose.model('Transaction', transactionSchema);
+export default mongoose.model('Transaction', transactionSchema);

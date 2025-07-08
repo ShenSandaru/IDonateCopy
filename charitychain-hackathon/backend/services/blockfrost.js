@@ -1,4 +1,4 @@
-const { BlockFrostAPI } = require('@blockfrost/blockfrost-js');
+import { BlockFrostAPI } from '@blockfrost/blockfrost-js';
 
 class BlockfrostService {
   constructor() {
@@ -176,6 +176,4 @@ class BlockfrostService {
   }
 }
 
-const blockfrostService = new BlockfrostService();
-
-module.exports = { blockfrostService };
+export const blockfrostService = new BlockfrostService();

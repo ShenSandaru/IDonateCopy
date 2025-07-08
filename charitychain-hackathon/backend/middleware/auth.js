@@ -1,7 +1,7 @@
-const jwt = require('jsonwebtoken');
-const { User } = require('../models/index.js');
+import jwt from 'jsonwebtoken';
+import { User } from '../models/index.js';
 
-const authenticateToken = async (req, res, next) => {
+export const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization']
     const token = authHeader && authHeader.split(' ')[1] // Bearer TOKEN
@@ -26,28 +26,28 @@ const authenticateToken = async (req, res, next) => {
   }
 }
 
-const requireAdmin = (req, res, next) => {
+export const requireAdmin = (req, res, next) => {
   if (!req.user || req.user.userType !== 'admin') {
     return res.status(403).json({ error: 'Admin access required' })
   }
   next()
 }
 
-const requireNGO = (req, res, next) => {
+export const requireNGO = (req, res, next) => {
   if (!req.user || req.user.userType !== 'ngo') {
     return res.status(403).json({ error: 'NGO access required' })
   }
   next()
 }
 
-const requireVerifiedNGO = (req, res, next) => {
+export const requireVerifiedNGO = (req, res, next) => {
   if (!req.user || req.user.userType !== 'ngo' || req.user.verificationStatus !== 'verified') {
     return res.status(403).json({ error: 'Verified NGO access required' })
   }
   next()
 }
 
-const generateToken = (userId, walletAddress, userType) => {
+export const generateToken = (userId, walletAddress, userType) => {
   return jwt.sign(
     { 
       userId, 
@@ -59,7 +59,7 @@ const generateToken = (userId, walletAddress, userType) => {
   )
 }
 
-const verifyWalletSignature = async (req, res, next) => {
+export const verifyWalletSignature = async (req, res, next) => {
   try {
     const { walletAddress, signature, message } = req.body
 
@@ -85,7 +85,7 @@ const verifyWalletSignature = async (req, res, next) => {
   }
 }
 
-const rateLimitByWallet = (req, res, next) => {
+export const rateLimitByWallet = (req, res, next) => {
   // Simple rate limiting by wallet address
   // In production, use Redis or a proper rate limiting service
   const walletAddress = req.body.walletAddress || req.params.walletAddress
@@ -102,13 +102,3 @@ const rateLimitByWallet = (req, res, next) => {
   // In production, implement proper rate limiting
   next()
 }
-
-module.exports = {
-  authenticateToken,
-  requireAdmin,
-  requireNGO,
-  requireVerifiedNGO,
-  generateToken,
-  verifyWalletSignature,
-  rateLimitByWallet
-};

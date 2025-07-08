@@ -1,9 +1,9 @@
-const Joi = require('joi');
+import Joi from 'joi';
 
 // Cardano address validation regex (simplified)
 const CARDANO_ADDRESS_REGEX = /^addr_test[0-9a-z]{54,}$|^addr[0-9a-z]{54,}$/
 
-const validateWalletAddress = (address) => {
+export const validateWalletAddress = (address) => {
   if (!address || typeof address !== 'string') {
     return false
   }
@@ -11,7 +11,7 @@ const validateWalletAddress = (address) => {
   return CARDANO_ADDRESS_REGEX.test(address)
 }
 
-const validateDonationData = (data) => {
+export const validateDonationData = (data) => {
   const schema = Joi.object({
     donorWalletAddress: Joi.string().required().custom((value, helpers) => {
       if (!validateWalletAddress(value)) {
@@ -39,7 +39,7 @@ const validateDonationData = (data) => {
   }
 }
 
-const validateNgoVerificationData = (data) => {
+export const validateNgoVerificationData = (data) => {
   const schema = Joi.object({
     walletAddress: Joi.string().required().custom((value, helpers) => {
       if (!validateWalletAddress(value)) {
@@ -87,7 +87,7 @@ const validateNgoVerificationData = (data) => {
   }
 }
 
-const validateUserRegistration = (data) => {
+export const validateUserRegistration = (data) => {
   const schema = Joi.object({
     walletAddress: Joi.string().required().custom((value, helpers) => {
       if (!validateWalletAddress(value)) {
@@ -123,14 +123,14 @@ const validateUserRegistration = (data) => {
   }
 }
 
-const sanitizeInput = (input) => {
+export const sanitizeInput = (input) => {
   if (typeof input === 'string') {
     return input.trim().replace(/[<>]/g, '')
   }
   return input
 }
 
-const validatePagination = (page, limit) => {
+export const validatePagination = (page, limit) => {
   const pageNum = parseInt(page) || 1
   const limitNum = parseInt(limit) || 20
   
@@ -139,12 +139,3 @@ const validatePagination = (page, limit) => {
     limit: Math.min(100, Math.max(1, limitNum))
   }
 }
-
-module.exports = {
-  validateWalletAddress,
-  validateDonationData,
-  validateNgoVerificationData,
-  validateUserRegistration,
-  sanitizeInput,
-  validatePagination
-};

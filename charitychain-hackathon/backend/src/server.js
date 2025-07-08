@@ -1,28 +1,32 @@
-const express = require('express');
-const cors = require('cors');
-const { BlockFrostAPI } = require('@blockfrost/blockfrost-js');
-const dotenv = require('dotenv');
-const path = require('path');
+import express from 'express';
+import cors from 'cors';
+import { BlockFrostAPI } from '@blockfrost/blockfrost-js';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Import services and middleware
-const { databaseService } = require('../services/database.js');
-const { 
+import { databaseService } from '../services/database.js';
+import { 
   securityHeaders, 
   apiRateLimit, 
   sanitizeRequest, 
   requestLogger, 
   errorHandler,
   corsOptions 
-} = require('../middleware/security.js');
-const { handleUploadError, serveUploads } = require('../middleware/upload.js');
+} from '../middleware/security.js';
+import { handleUploadError, serveUploads } from '../middleware/upload.js';
 
 // Import routes
-const { 
+import { 
   usersRouter, 
   donationsRouter, 
   ngoVerificationRouter, 
   blockchainRouter 
-} = require('../routes/index.js');
+} from '../routes/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables from the parent directory
 dotenv.config({ path: path.join(__dirname, '..', '.env') });

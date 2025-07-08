@@ -1,8 +1,8 @@
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 // Security headers middleware
-const securityHeaders = helmet({
+export const securityHeaders = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
@@ -45,7 +45,7 @@ const strictRateLimit = createRateLimit({
 })
 
 // General API rate limiting
-const apiRateLimit = createRateLimit({
+export const apiRateLimit = createRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100 // 100 requests per 15 minutes
 })
@@ -60,7 +60,7 @@ const uploadRateLimit = createRateLimit({
 })
 
 // Request sanitization middleware
-const sanitizeRequest = (req, res, next) => {
+export const sanitizeRequest = (req, res, next) => {
   // Remove null bytes and other dangerous characters
   const sanitize = (obj) => {
     if (typeof obj === 'string') {
