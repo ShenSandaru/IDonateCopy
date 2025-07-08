@@ -1,7 +1,7 @@
-const express = require('express');
-const { Transaction } = require('../models/index.js');
-const { blockfrostService } = require('../services/blockfrost.js');
-const { validateWalletAddress } = require('../utils/validation.js');
+import express from 'express';
+import { Transaction } from '../models/index.js';
+import { blockfrostService } from '../services/blockfrost.js';
+import { validateWalletAddress } from '../utils/validation.js';
 
 const router = express.Router();
 
@@ -226,4 +226,4 @@ router.post('/transaction/submit', async (req, res) => {
   }
 })
 
-module.exports = router;
+export default router;

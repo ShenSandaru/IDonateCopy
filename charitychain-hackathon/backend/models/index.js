@@ -1,10 +1,10 @@
 // Central export for all models
-const User = require('./User.js');
-const Donation = require('./Donation.js');
-const NgoVerification = require('./NgoVerification.js');
-const Transaction = require('./Transaction.js');
+import User from './User.js';
+import Donation from './Donation.js';
+import NgoVerification from './NgoVerification.js';
+import Transaction from './Transaction.js';
 
-module.exports = {
+export {
   User,
   Donation,
   NgoVerification,

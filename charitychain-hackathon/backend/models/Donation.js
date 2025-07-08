@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const donationSchema = new mongoose.Schema({
   donor: {
@@ -118,14 +118,4 @@ donationSchema.index({ 'recipient.walletAddress': 1 });
 donationSchema.index({ 'blockchain.transactionHash': 1 });
 donationSchema.index({ status: 1 });
 
-module.exports = mongoose.model('Donation', donationSchema);
-
-// Indexes for efficient queries
-donationSchema.index({ 'donor.walletAddress': 1 })
-donationSchema.index({ 'recipient.walletAddress': 1 })
-donationSchema.index({ 'blockchain.transactionHash': 1 })
-donationSchema.index({ status: 1 })
-donationSchema.index({ createdAt: -1 })
-donationSchema.index({ amount: -1 })
-
-export default mongoose.model('Donation', donationSchema)
+export default mongoose.model('Donation', donationSchema);

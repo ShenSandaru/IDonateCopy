@@ -1,6 +1,11 @@
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const uploadsDir = path.join(__dirname, '..', 'uploads')
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
@@ -52,7 +57,7 @@ const upload = multer({
 })
 
 // Middleware for handling upload errors
-const handleUploadError = (error, req, res, next) => {
+export const handleUploadError = (error, req, res, next) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ error: 'File size too large. Maximum 10MB per file.' })
@@ -73,19 +78,19 @@ const handleUploadError = (error, req, res, next) => {
 }
 
 // Export upload middleware
-const uploadMiddleware = upload
+export const uploadMiddleware = upload
 
 // Single file upload
-const uploadSingle = (fieldName) => upload.single(fieldName)
+export const uploadSingle = (fieldName) => upload.single(fieldName)
 
 // Multiple files upload
-const uploadMultiple = (fieldName, maxCount = 5) => upload.array(fieldName, maxCount)
+export const uploadMultiple = (fieldName, maxCount = 5) => upload.array(fieldName, maxCount)
 
 // Multiple fields upload
-const uploadFields = (fields) => upload.fields(fields)
+export const uploadFields = (fields) => upload.fields(fields)
 
 // Serve uploaded files
-const serveUploads = (req, res, next) => {
+export const serveUploads = (req, res, next) => {
   const filename = req.params.filename
   const filePath = path.join(uploadsDir, filename)
   
@@ -139,14 +144,3 @@ const getFileInfo = (filename) => {
     return null
   }
 }
-
-module.exports = {
-  uploadMiddleware,
-  uploadSingle,
-  uploadMultiple,
-  uploadFields,
-  handleUploadError,
-  serveUploads,
-  deleteUploadedFile,
-  getFileInfo
-};

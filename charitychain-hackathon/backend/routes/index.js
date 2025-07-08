@@ -1,10 +1,15 @@
 // Central export for all routes
-const usersRouter = require('./users.js');
-const donationsRouter = require('./donations.js');
-const ngoVerificationRouter = require('./ngoVerification.js');
-const blockchainRouter = require('./blockchain.js');
+import * as users from './users.js';
+import * as donations from './donations.js';
+import * as ngoVerification from './ngoVerification.js';
+import * as blockchain from './blockchain.js';
 
-module.exports = {
+const usersRouter = users.default;
+const donationsRouter = donations.default;
+const ngoVerificationRouter = ngoVerification.default;
+const blockchainRouter = blockchain.default;
+
+export {
   usersRouter,
   donationsRouter,
   ngoVerificationRouter,
