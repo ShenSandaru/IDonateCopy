@@ -36,7 +36,7 @@ const createRateLimit = (options = {}) => {
 }
 
 // Strict rate limiting for sensitive endpoints
-const strictRateLimit = createRateLimit({
+export const strictRateLimit = createRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // Only 5 requests per 15 minutes
   message: {

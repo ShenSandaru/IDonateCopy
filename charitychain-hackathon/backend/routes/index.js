@@ -1,13 +1,8 @@
 // Central export for all routes
-import * as users from './users.js';
-import * as donations from './donations.js';
-import * as ngoVerification from './ngoVerification.js';
-import * as blockchain from './blockchain.js';
-
-const usersRouter = users.default;
-const donationsRouter = donations.default;
-const ngoVerificationRouter = ngoVerification.default;
-const blockchainRouter = blockchain.default;
+import usersRouter from './users.js';
+import donationsRouter from './donations.js';
+import ngoVerificationRouter from './ngoVerification.js';
+import blockchainRouter from './blockchain.js';
 
 export {
   usersRouter,

@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
+// Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -111,7 +112,7 @@ export const serveUploads = (req, res, next) => {
 }
 
 // Delete uploaded file
-const deleteUploadedFile = (filename) => {
+export const deleteUploadedFile = (filename) => {
   try {
     const filePath = path.join(uploadsDir, filename)
     if (fs.existsSync(filePath)) {
@@ -126,7 +127,7 @@ const deleteUploadedFile = (filename) => {
 }
 
 // Get file info
-const getFileInfo = (filename) => {
+export const getFileInfo = (filename) => {
   try {
     const filePath = path.join(uploadsDir, filename)
     if (fs.existsSync(filePath)) {

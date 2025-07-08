@@ -1,22 +1,46 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useWallet } from '@meshsdk/react'
-import { CardanoWallet } from '@meshsdk/react'
+import TestnetGuide from './TestnetGuide'
+import WalletDebugger from './WalletDebugger'
+import ManualWalletConnect from './ManualWalletConnect'
 
 export default function WalletConnect() {
   const { connected, wallet, connecting, connect, disconnect, name } = useWallet()
   const [walletInfo, setWalletInfo] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [networkInfo, setNetworkInfo] = useState<any>(null)
 
   // Get wallet information when connected
   useEffect(() => {
     if (connected && wallet) {
       getWalletInfo()
+      getNetworkInfo()
     } else {
       setWalletInfo(null)
+      setNetworkInfo(null)
     }
   }, [connected, wallet])
+
+  async function getNetworkInfo() {
+    if (!wallet) return
+    
+    try {
+      // Get network information
+      const networkId = await wallet.getNetworkId()
+      const isTestnet = networkId === 0 // 0 = testnet, 1 = mainnet
+      
+      setNetworkInfo({
+        networkId,
+        isTestnet,
+        networkName: isTestnet ? 'Preprod Testnet' : 'Mainnet',
+        environment: process.env.NEXT_PUBLIC_BLOCKFROST_NETWORK || 'preprod'
+      })
+    } catch (error) {
+      console.error('Error getting network info:', error)
+    }
+  }
 
   async function getWalletInfo() {
     if (!wallet) return
@@ -76,11 +100,18 @@ export default function WalletConnect() {
           Connect your Cardano wallet to start donating transparently
         </p>
       </div>
-      
-      {/* Wallet Connection Component */}
-      <div className="mb-6">
-        <CardanoWallet />
-      </div>
+
+      {/* Manual Wallet Connection */}
+      <ManualWalletConnect />
+
+      {/* Wallet Debugger */}
+      <WalletDebugger />
+
+      {/* Testnet Setup Guide */}
+      {!connected && <TestnetGuide />}
+
+      {/* Manual Wallet Connection - Primary Method */}
+      <ManualWalletConnect />
 
       {/* Connection Status */}
       <div className="mb-6">
@@ -123,6 +154,45 @@ export default function WalletConnect() {
           </div>
         )}
       </div>
+
+      {/* Network Information */}
+      {connected && networkInfo && (
+        <div className={`mb-6 border rounded-lg p-4 ${
+          networkInfo.isTestnet 
+            ? 'bg-yellow-50 border-yellow-200' 
+            : 'bg-blue-50 border-blue-200'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <span className={`text-xl mr-3 ${
+                networkInfo.isTestnet ? 'text-yellow-600' : 'text-blue-600'
+              }`}>
+                {networkInfo.isTestnet ? '🧪' : '🌐'}
+              </span>
+              <div>
+                <p className={`font-semibold ${
+                  networkInfo.isTestnet ? 'text-yellow-800' : 'text-blue-800'
+                }`}>
+                  {networkInfo.networkName}
+                </p>
+                <p className={`text-sm ${
+                  networkInfo.isTestnet ? 'text-yellow-600' : 'text-blue-600'
+                }`}>
+                  {networkInfo.isTestnet 
+                    ? 'Perfect for testing donations!' 
+                    : 'Live network - real transactions'
+                  }
+                </p>
+              </div>
+            </div>
+            {networkInfo.isTestnet && (
+              <div className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                TESTNET
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Error Display */}
       {error && (
@@ -203,6 +273,24 @@ export default function WalletConnect() {
               All transactions will be recorded on the Cardano blockchain.
             </p>
           </div>
+
+          {/* Network Information */}
+          {networkInfo && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
+                <span className="text-xl mr-2">🌐</span>
+                Network Information
+              </h3>
+              <div className="text-blue-800 text-sm">
+                <p>
+                  <span className="font-medium">Network:</span> {networkInfo.networkName}
+                </p>
+                <p>
+                  <span className="font-medium">Environment:</span> {networkInfo.environment}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
