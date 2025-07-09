@@ -1,0 +1,318 @@
+// Smart contract integration for CharityChain
+import { 
+  Transaction, 
+  PlutusScript, 
+  MeshTxBuilder,
+  UTxO,
+  Asset,
+  Script,
+  type WalletApi,
+  type AssetMetadata,
+  type AccountInfo,
+  type BlockInfo,
+  type TransactionInfo
+} from '@meshsdk/core'
+import { Data } from '@meshsdk/core-csl'
+import { 
+  DonationDatum, 
+  DonationRedeemer, 
+  DonationReceiptMetadata, 
+  NFTRedeemer,
+  AllocationBreakdown,
+  DonationStatus 
+} from '@/types/contracts'
+import plutusContracts from '../../../contracts/donation-tracker/plutus.json'
+
+// Contract addresses and hashes from compiled plutus.json
+export const CONTRACTS = {
+  donation: {
+    scriptHash: plutusContracts.validators[0].hash,
+    script: plutusContracts.validators[0].compiledCode,
+    address: '' // Will be set after deployment
+  },
+  nftReceipt: {
+    scriptHash: plutusContracts.validators[2].hash,
+    script: plutusContracts.validators[2].compiledCode,
+    policyId: '' // Will be set after deployment
+  }
+}
+
+// Smart contract service for donation tracking
+export class CharityChainContracts {
+  private txBuilder: MeshTxBuilder
+
+  constructor() {
+    this.txBuilder = new MeshTxBuilder({
+      fetcher: {
+        fetchAccountInfo: async () => ({ active: true, poolId: null }),
+        fetchAddressUTxOs: async () => [],
+        fetchAssetAddresses: async () => ({}),
+        fetchAssetMetadata: async () => ({}),
+        fetchBlockInfo: async () => ({}),
+        fetchCollectionAssets: async () => ({}),
+        fetchHandleAddress: async () => '',
+        fetchHandleByAddress: async () => '',
+        fetchProtocolParameters: async () => ({
+          minFeeA: 44,
+          minFeeB: 155381,
+          maxTxSize: 16384,
+          maxValSize: 5000,
+          utxoCostPerWord: 4310,
+          minUTxO: 1000000,
+          poolDeposit: 500000000,
+          keyDeposit: 2000000,
+          priceMem: 0.0577,
+          priceStep: 0.0000721,
+          maxTxExMem: 10000000,
+          maxTxExSteps: 10000000000,
+          coinsPerUTxOWord: 4310,
+          collateralPercent: 150,
+          maxCollateralInputs: 3,
+          minPoolCost: 340000000
+        }),
+        fetchTxInfo: async () => ({}),
+        fetchUTxOs: async () => []
+      },
+      submitter: {
+        submitTx: async () => ''
+      },
+      evaluator: {
+        evaluateTx: async () => ({})
+      }
+    })
+  }
+
+  /**
+   * Create a new donation transaction with smart contract integration
+   */
+  async createDonation(
+    donorAddress: string,
+    ngoAddress: string,
+    amount: number,
+    purpose: string,
+    trackingId: string
+  ): Promise<string> {
+    const lovelaceAmount = amount * 1000000 // Convert ADA to lovelace
+
+    // Create donation datum
+    const datum: DonationDatum = {
+      donor: donorAddress,
+      ngo: ngoAddress,
+      amount: lovelaceAmount,
+      timestamp: Date.now(),
+      allocation: {
+        administration: 5,
+        aid_delivery: 75,
+        logistics: 20
+      },
+      purpose,
+      tracking_id: trackingId,
+      status: DonationStatus.Pending
+    }
+
+    // Create redeemer for donation creation
+    const redeemer: DonationRedeemer = {
+      action: "CreateDonation"
+    }
+
+    try {
+      // Build transaction with smart contract interaction
+      this.txBuilder
+        .txOut(CONTRACTS.donation.address, [
+          { unit: 'lovelace', quantity: lovelaceAmount.toString() }
+        ])
+        .txOutInlineDatumValue(Data.to(datum))
+        .txOut(ngoAddress, [
+          { unit: 'lovelace', quantity: (lovelaceAmount * 0.95).toString() }
+        ])
+        .changeAddress(donorAddress)
+
+      const unsignedTx = this.txBuilder.complete()
+      return unsignedTx
+    } catch (error) {
+      console.error('Error creating donation transaction:', error)
+      throw new Error('Failed to create donation transaction')
+    }
+  }
+
+  /**
+   * Mint NFT receipt for donation
+   */
+  async mintDonationReceipt(
+    donationId: string,
+    donorAddress: string,
+    ngoAddress: string,
+    amount: number,
+    purpose: string,
+    ngoName: string,
+    txHash: string
+  ): Promise<string> {
+    const metadata: DonationReceiptMetadata = {
+      donation_id: donationId,
+      donor: donorAddress,
+      ngo: ngoAddress,
+      amount,
+      timestamp: Date.now(),
+      purpose,
+      ngo_name: ngoName,
+      tx_hash: txHash
+    }
+
+    const redeemer: NFTRedeemer = {
+      action: "MintReceipt",
+      data: {
+        metadata,
+        recipient: donorAddress
+      }
+    }
+
+    try {
+      // Generate unique token name
+      const tokenName = `CharityReceipt_${donationId.slice(0, 8)}_${Date.now()}`
+      
+      // Create minting transaction
+      this.txBuilder
+        .mintPlutusScriptV3()
+        .mint(1, CONTRACTS.nftReceipt.policyId, tokenName)
+        .mintingScript(CONTRACTS.nftReceipt.script)
+        .mintRedeemerValue(Data.to(redeemer))
+        .txOut(donorAddress, [
+          { unit: 'lovelace', quantity: '2000000' },
+          { unit: CONTRACTS.nftReceipt.policyId + tokenName, quantity: '1' }
+        ])
+        .txOutInlineDatumValue(Data.to(metadata))
+        .changeAddress(donorAddress)
+
+      const unsignedTx = this.txBuilder.complete()
+      return unsignedTx
+    } catch (error) {
+      console.error('Error minting NFT receipt:', error)
+      throw new Error('Failed to mint NFT receipt')
+    }
+  }
+
+  /**
+   * Query donation status from blockchain
+   */
+  async queryDonationStatus(trackingId: string): Promise<DonationDatum | null> {
+    try {
+      // This would query the blockchain for UTxOs at the contract address
+      // For now, we'll return a placeholder
+      console.log('Querying donation status for:', trackingId)
+      return null
+    } catch (error) {
+      console.error('Error querying donation:', error)
+      return null
+    }
+  }
+
+  /**
+   * Allocate funds from donation contract
+   */
+  async allocateFunds(
+    trackingId: string,
+    newAllocation: AllocationBreakdown,
+    ngoAddress: string
+  ): Promise<string> {
+    const redeemer: DonationRedeemer = {
+      action: "AllocateFunds",
+      data: {
+        new_allocation: newAllocation
+      }
+    }
+
+    try {
+      // Build fund allocation transaction
+      this.txBuilder
+        .spendingPlutusScriptV3()
+        .txIn('', '', []) // Input from donation contract
+        .spendingScript(CONTRACTS.donation.script)
+        .spendingRedeemerValue(Data.to(redeemer))
+        .changeAddress(ngoAddress)
+
+      const unsignedTx = this.txBuilder.complete()
+      return unsignedTx
+    } catch (error) {
+      console.error('Error allocating funds:', error)
+      throw new Error('Failed to allocate funds')
+    }
+  }
+
+  /**
+   * Withdraw funds for specific purpose
+   */
+  async withdrawFunds(
+    trackingId: string,
+    amount: number,
+    purpose: string,
+    recipient: string,
+    ngoAddress: string
+  ): Promise<string> {
+    const redeemer: DonationRedeemer = {
+      action: "WithdrawFunds",
+      data: {
+        amount,
+        purpose,
+        recipient
+      }
+    }
+
+    try {
+      // Build withdrawal transaction
+      this.txBuilder
+        .spendingPlutusScriptV3()
+        .txIn('', '', []) // Input from donation contract
+        .spendingScript(CONTRACTS.donation.script)
+        .spendingRedeemerValue(Data.to(redeemer))
+        .txOut(recipient, [
+          { unit: 'lovelace', quantity: (amount * 1000000).toString() }
+        ])
+        .changeAddress(ngoAddress)
+
+      const unsignedTx = this.txBuilder.complete()
+      return unsignedTx
+    } catch (error) {
+      console.error('Error withdrawing funds:', error)
+      throw new Error('Failed to withdraw funds')
+    }
+  }
+}
+
+// Export singleton instance
+export const contractService = new CharityChainContracts()
+
+// Helper functions for contract interaction
+export const convertToPlutusData = (data: any): string => {
+  return Data.to(data)
+}
+
+export const convertFromPlutusData = (plutusData: string): any => {
+  return Data.from(plutusData)
+}
+
+// Contract deployment utilities
+export const getContractAddress = (scriptHash: string): string => {
+  // Convert script hash to bech32 address
+  return `addr_test1w${scriptHash}` // Testnet prefix
+}
+
+// Transaction metadata utilities
+export const createDonationMetadata = (
+  donationId: string,
+  amount: number,
+  ngoName: string,
+  purpose: string
+) => ({
+  674: {
+    msg: [
+      `CharityChain Donation #${donationId}`,
+      `Amount: ${amount} ADA`,
+      `Recipient: ${ngoName}`,
+      `Purpose: ${purpose}`,
+      `Platform: CharityChain Iran Support`,
+      `Timestamp: ${new Date().toISOString()}`
+    ]
+  }
+})
+
+export default CharityChainContracts

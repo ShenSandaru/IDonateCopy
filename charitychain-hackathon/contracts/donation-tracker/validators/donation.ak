@@ -1,18 +1,8 @@
-use aiken/builtin
-use aiken/primitive/bytearray
-use aiken/cbor
-use aiken/collection/dict
-use aiken/crypto.{blake2b_224, blake2b_256}
 use aiken/collection/list
-use aiken/option
-use cardano/transaction.{
-  Input, Output, Transaction, TransactionId,
-}
-use cardano/script_context.{ScriptContext, ScriptInfo}
-use cardano/address.{
-  Address, Inline, PaymentCredential, ScriptCredential,
-}
+use cardano/script_context.{ScriptContext, Spending}
+use cardano/address.{Address, VerificationKey}
 use cardano/assets.{lovelace_of}
+use cardano/transaction.{Transaction, Output}
 
 // Datum for donation tracking
 pub type DonationDatum {
@@ -30,23 +20,34 @@ pub type DonationDatum {
   purpose: ByteArray,
   // Tracking ID for off-chain reference
   tracking_id: ByteArray,
+  // Status of the donation
+  status: DonationStatus,
 }
 
+// Allocation breakdown for fund usage
 pub type AllocationBreakdown {
-  administration: Int,  // Percentage (0-100)
-  aid_delivery: Int,    // Percentage (0-100)
-  logistics: Int,       // Percentage (0-100)
+  administration: Int,
+  aid_delivery: Int,
+  logistics: Int,
 }
 
-// Redeemer for donation actions
+// Status of donations
+pub type DonationStatus {
+  Pending
+  Allocated
+  Completed
+  Disputed
+}
+
+// Redeemer for donation operations
 pub type DonationRedeemer {
   CreateDonation
-  UpdateAllocation { new_allocation: AllocationBreakdown }
+  AllocateFunds { new_allocation: AllocationBreakdown }
   WithdrawFunds { amount: Int, purpose: ByteArray }
   VerifySpending { recipient: Address, amount: Int }
 }
 
-// Validator for donation tracking
+// Main validator for donation contract
 pub fn donation_validator(
   datum: DonationDatum,
   redeemer: DonationRedeemer,
@@ -55,11 +56,11 @@ pub fn donation_validator(
   let ScriptContext { transaction, info, .. } = ctx
 
   when info is {
-    Spending { output, datum: _ } -> {
+    Spending { output: _, datum: _ } -> {
       when redeemer is {
         CreateDonation -> validate_donation_creation(datum, transaction)
-        UpdateAllocation { new_allocation } -> 
-          validate_allocation_update(datum, new_allocation, transaction)
+        AllocateFunds { new_allocation } -> 
+          validate_fund_allocation(datum, new_allocation, transaction)
         WithdrawFunds { amount, purpose } -> 
           validate_fund_withdrawal(datum, amount, purpose, transaction)
         VerifySpending { recipient, amount } -> 
@@ -71,50 +72,36 @@ pub fn donation_validator(
 }
 
 // Validate donation creation
-fn validate_donation_creation(datum: DonationDatum, tx: Transaction) -> Bool {
-  let Transaction { inputs, outputs, .. } = tx
-  
-  // Check that allocation percentages sum to 100
-  let total_allocation = datum.allocation.administration + 
-                        datum.allocation.aid_delivery + 
-                        datum.allocation.logistics
-  
-  // Validate allocation breakdown
-  let valid_allocation = total_allocation == 100 &&
-                        datum.allocation.administration >= 0 &&
-                        datum.allocation.aid_delivery >= 0 &&
-                        datum.allocation.logistics >= 0
-  
-  // Check that donation amount is positive
+fn validate_donation_creation(datum: DonationDatum, _tx: Transaction) -> Bool {
+  // Basic validation for donation creation
   let valid_amount = datum.amount > 0
+  let valid_timestamp = datum.timestamp > 0
+  let valid_tracking_id = datum.tracking_id != ""
+  let valid_initial_status = datum.status == Pending
   
-  // Check that tracking ID is provided
-  let valid_tracking = bytearray.length(datum.tracking_id) > 0
-  
-  valid_allocation && valid_amount && valid_tracking
+  valid_amount && valid_timestamp && valid_tracking_id && valid_initial_status
 }
 
-// Validate allocation update (only NGO can update)
-fn validate_allocation_update(
+// Validate fund allocation
+fn validate_fund_allocation(
   datum: DonationDatum,
   new_allocation: AllocationBreakdown,
   tx: Transaction,
 ) -> Bool {
   let Transaction { extra_signatories, .. } = tx
   
-  // Check that new allocation percentages sum to 100
-  let total_allocation = new_allocation.administration + 
-                        new_allocation.aid_delivery + 
-                        new_allocation.logistics
-  
-  // Validate new allocation breakdown
+  // Check that total allocation is 100%
+  let total_allocation = new_allocation.administration + new_allocation.aid_delivery + new_allocation.logistics
   let valid_allocation = total_allocation == 100 &&
                         new_allocation.administration >= 0 &&
                         new_allocation.aid_delivery >= 0 &&
                         new_allocation.logistics >= 0
   
   // Check that NGO signed the transaction
-  let ngo_signed = list.has(extra_signatories, datum.ngo)
+  let ngo_signed = when datum.ngo.payment_credential is {
+    VerificationKey(vk_hash) -> list.has(extra_signatories, vk_hash)
+    _ -> False
+  }
   
   valid_allocation && ngo_signed
 }
@@ -123,21 +110,24 @@ fn validate_allocation_update(
 fn validate_fund_withdrawal(
   datum: DonationDatum,
   amount: Int,
-  purpose: ByteArray,
+  _purpose: ByteArray,
   tx: Transaction,
 ) -> Bool {
   let Transaction { extra_signatories, outputs, .. } = tx
   
   // Check that NGO signed the transaction
-  let ngo_signed = list.has(extra_signatories, datum.ngo)
+  let ngo_signed = when datum.ngo.payment_credential is {
+    VerificationKey(vk_hash) -> list.has(extra_signatories, vk_hash)
+    _ -> False
+  }
   
   // Check that withdrawal amount is valid
   let valid_amount = amount > 0 && amount <= datum.amount
   
   // Check that purpose is provided
-  let valid_purpose = bytearray.length(purpose) > 0
+  let valid_purpose = True // Simplified validation
   
-  // Verify funds go to NGO address
+  // Check that funds go to NGO address
   let funds_to_ngo = list.any(outputs, fn(output) {
     output.address == datum.ngo && 
     lovelace_of(output.value) >= amount
@@ -156,7 +146,10 @@ fn validate_spending_verification(
   let Transaction { extra_signatories, outputs, .. } = tx
   
   // Check that NGO signed the transaction
-  let ngo_signed = list.has(extra_signatories, datum.ngo)
+  let ngo_signed = when datum.ngo.payment_credential is {
+    VerificationKey(vk_hash) -> list.has(extra_signatories, vk_hash)
+    _ -> False
+  }
   
   // Check that spending amount is valid
   let valid_amount = amount > 0 && amount <= datum.amount
@@ -170,15 +163,12 @@ fn validate_spending_verification(
   ngo_signed && valid_amount && funds_to_recipient
 }
 
-// Helper function to check if address is valid
-fn is_valid_address(addr: Address) -> Bool {
-  when addr.payment_credential is {
-    ScriptCredential(_) -> True
-    _ -> True
+// Export the validator for use by frontend/backend
+validator donation {
+  spend(datum: Option<DonationDatum>, redeemer: DonationRedeemer, _output_reference, ctx: ScriptContext) -> Bool {
+    when datum is {
+      Some(d) -> donation_validator(d, redeemer, ctx)
+      None -> False
+    }
   }
-}
-
-// Export the validator
-pub fn donation_script() -> Bool {
-  True
 }

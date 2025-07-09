@@ -1,7 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWallet } from '@meshsdk/react'
 import { Transaction, ForgeScript, AssetMetadata, Mint } from '@meshsdk/core'
+import { contractService, createDonationMetadata } from '@/lib/contracts'
+import { v4 as uuidv4 } from 'uuid'
 
 interface DonationTransactionProps {
   ngoAddress: string
