@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import WalletConnector from './WalletConnector'
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
@@ -42,6 +43,9 @@ export default function Navigation() {
             <Link href="/faq" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
               FAQ
             </Link>
+            
+            {/* Wallet Connection Component */}
+            <WalletConnector />
           </div>
 
           {/* Mobile menu button */}
@@ -90,6 +94,11 @@ export default function Navigation() {
             <Link href="/faq" className="text-gray-700 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium">
               FAQ
             </Link>
+            
+            {/* Mobile Wallet Connection */}
+            <div className="px-3 py-2">
+              <WalletConnector />
+            </div>
           </div>
         </div>
       )}

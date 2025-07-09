@@ -110,9 +110,6 @@ export default function WalletConnect() {
       {/* Testnet Setup Guide */}
       {!connected && <TestnetGuide />}
 
-      {/* Manual Wallet Connection - Primary Method */}
-      <ManualWalletConnect />
-
       {/* Connection Status */}
       <div className="mb-6">
         {connecting && (

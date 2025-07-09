@@ -1,6 +1,3 @@
-import express from 'express';
-import cors from 'cors';
-import { BlockFrostAPI } from '@blockfrost/blockfrost-js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,6 +5,13 @@ import { fileURLToPath } from 'url';
 // Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load environment variables FIRST before any other imports
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
+import express from 'express';
+import cors from 'cors';
+import { BlockFrostAPI } from '@blockfrost/blockfrost-js';
 
 // Import services and middleware
 import { databaseService } from '../services/database.js';
@@ -26,11 +30,9 @@ import {
   usersRouter, 
   donationsRouter, 
   ngoVerificationRouter, 
-  blockchainRouter 
+  blockchainRouter,
+  contractsRouter
 } from '../routes/index.js';
-
-// Load environment variables from the parent directory
-dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -99,6 +101,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/donations', donationsRouter);
 app.use('/api/ngo-verification', ngoVerificationRouter);
 app.use('/api/blockchain', blockchainRouter);
+app.use('/api/contracts', contractsRouter);
 
 // Serve uploaded files
 app.get('/uploads/:filename', serveUploads)

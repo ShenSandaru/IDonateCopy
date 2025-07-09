@@ -1,18 +1,12 @@
 use aiken/builtin
 use aiken/primitive/bytearray
-use aiken/cbor
-use aiken/collection/dict
-use aiken/crypto.{blake2b_224, blake2b_256}
+use aiken/collection/dict.{Dict}
+use aiken/crypto.{blake2b_256}
 use aiken/collection/list
-use aiken/option
-use cardano/transaction.{
-  Input, Output, Transaction, TransactionId,
-}
-use cardano/script_context.{ScriptContext, Spend, Mint}
-use cardano/address.{
-  Address, Inline, PaymentCredential, ScriptCredential,
-}
-use cardano/assets.{Value, ada_asset_name, ada_policy_id, PolicyId, from_minted_value, quantity_of}
+use cardano/script_context.{ScriptContext, Minting}
+use cardano/address.{Address, VerificationKey}
+use cardano/assets.{PolicyId, quantity_of}
+use cardano/transaction.{Transaction, Input, Output}
 
 // NFT metadata for donation receipts
 pub type DonationReceiptMetadata {
@@ -50,10 +44,10 @@ pub fn nft_minting_validator(
   redeemer: NFTRedeemer,
   ctx: ScriptContext,
 ) -> Bool {
-  let ScriptContext { transaction, purpose } = ctx
+  let ScriptContext { transaction, info, .. } = ctx
 
-  when purpose is {
-    Mint(own_policy_id) -> {
+  when info is {
+    Minting(own_policy_id) -> {
       when redeemer is {
         MintReceipt { metadata, recipient } -> 
           validate_receipt_minting(metadata, recipient, own_policy_id, transaction)
@@ -78,8 +72,7 @@ fn validate_receipt_minting(
   let token_name = generate_token_name(metadata.donation_id, metadata.timestamp)
   
   // Check that exactly one NFT is minted
-  let minted_value = from_minted_value(mint)
-  let nft_amount = quantity_of(minted_value, policy_id, token_name)
+  let nft_amount = quantity_of(mint, policy_id, token_name)
   let valid_mint = nft_amount == 1
   
   // Check that NFT goes to the correct recipient (donor)
@@ -92,7 +85,10 @@ fn validate_receipt_minting(
   let valid_metadata = validate_donation_metadata(metadata)
   
   // Check that donor signed the transaction
-  let donor_signed = list.has(extra_signatories, metadata.donor)
+  let donor_signed = when metadata.donor.payment_credential is {
+    VerificationKey(vk_hash) -> list.has(extra_signatories, vk_hash)
+    _ -> False
+  }
   
   valid_mint && nft_to_recipient && valid_metadata && donor_signed
 }
@@ -106,8 +102,7 @@ fn validate_receipt_burning(
   let Transaction { mint, inputs, extra_signatories, .. } = tx
   
   // Check that exactly one NFT is burned
-  let burned_value = from_minted_value(mint)
-  let nft_amount = quantity_of(burned_value, policy_id, token_name)
+  let nft_amount = quantity_of(mint, policy_id, token_name)
   let valid_burn = nft_amount == -1
   
   // Check that the NFT exists in inputs
@@ -118,7 +113,10 @@ fn validate_receipt_burning(
   // Find the owner of the NFT and verify they signed
   let nft_owner = get_nft_owner(inputs, policy_id, token_name)
   let owner_signed = when nft_owner is {
-    Some(owner) -> list.has(extra_signatories, owner)
+    Some(owner) -> when owner.payment_credential is {
+      VerificationKey(vk_hash) -> list.has(extra_signatories, vk_hash)
+      _ -> False
+    }
     None -> False
   }
   
@@ -162,18 +160,20 @@ fn get_nft_owner(
   policy_id: PolicyId,
   token_name: ByteArray,
 ) -> Option<Address> {
-  list.find_map(inputs, fn(input) {
-    if quantity_of(input.output.value, policy_id, token_name) == 1 {
-      Some(input.output.address)
-    } else {
-      None
-    }
-  })
+  when inputs is {
+    [] -> None
+    [input, ..rest] -> 
+      if quantity_of(input.output.value, policy_id, token_name) == 1 {
+        Some(input.output.address)
+      } else {
+        get_nft_owner(rest, policy_id, token_name)
+      }
+  }
 }
 
 // Helper function to create NFT metadata for CIP-25
 pub fn create_nft_metadata(metadata: DonationReceiptMetadata) -> Dict<ByteArray, ByteArray> {
-  dict.new()
+  dict.empty
     |> dict.insert("name", bytearray.concat("CharityChain Receipt #", metadata.donation_id))
     |> dict.insert("description", "Official donation receipt NFT from CharityChain platform")
     |> dict.insert("image", "ipfs://QmCharityChainReceiptImage")
@@ -186,22 +186,9 @@ pub fn create_nft_metadata(metadata: DonationReceiptMetadata) -> Dict<ByteArray,
     |> dict.insert("ngo", builtin.serialise_data(metadata.ngo))
 }
 
-// Helper function to validate CIP-25 metadata format
-fn validate_cip25_metadata(metadata: Dict<ByteArray, ByteArray>) -> Bool {
-  let has_name = dict.has_key(metadata, "name")
-  let has_description = dict.has_key(metadata, "description")
-  let has_image = dict.has_key(metadata, "image")
-  
-  has_name && has_description && has_image
-}
-
-// Export the validator
-pub fn nft_minting_script() -> Bool {
-  True
-}
-
-// Export policy ID calculation helper
-pub fn calculate_policy_id(tx_hash: ByteArray, output_index: Int) -> PolicyId {
-  let output_ref = builtin.serialise_data((tx_hash, output_index))
-  blake2b_224(output_ref)
+// Export the validator for use by frontend/backend
+validator nft_receipt {
+  mint(redeemer: NFTRedeemer, _policy_id, ctx: ScriptContext) -> Bool {
+    nft_minting_validator(redeemer, ctx)
+  }
 }

@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useWallet } from '@meshsdk/react'
 import DonationTransaction from '@/components/DonationTransaction'
+import SmartContractDonation from '@/components/SmartContractDonation'
 
 const mockNGOs = [
   {
@@ -14,7 +15,8 @@ const mockNGOs = [
     image: "/api/placeholder/300/200",
     location: "Tehran, Fars, Kurdistan, Khuzestan",
     urgency: "High",
-    impact: "12,000+ patients treated this month"
+    impact: "12,000+ patients treated this month",
+    walletAddress: "addr_test1qpw0djgj0x59ngrjvqthn7enhvruxnsavsw5th63la3mjel3tkc974sr23jmlzgq5zda4gtv8k9cy38756r9y3qgmkqqjz6aa7"
   },
   {
     id: 2,
@@ -26,7 +28,8 @@ const mockNGOs = [
     image: "/api/placeholder/300/200",
     location: "Isfahan, Shiraz, Mashhad, Tabriz",
     urgency: "Medium",
-    impact: "8,500+ students supported"
+    impact: "8,500+ students supported",
+    walletAddress: "addr_test1qzx9hu8j4ah3auytk0mwcaasvskugtaeer265rk9kwvutl3tkc974sr23jmlzgq5zda4gtv8k9cy38756r9y3qgmkqs5s6c6"
   },
   {
     id: 3,
@@ -38,7 +41,8 @@ const mockNGOs = [
     image: "/api/placeholder/300/200",
     location: "Rural areas nationwide",
     urgency: "Critical",
-    impact: "5,200+ families fed monthly"
+    impact: "5,200+ families fed monthly",
+    walletAddress: "addr_test1qr0p2z7xzqn6p3t7a5kvw2j5udt3m9qk5x8n4e7r3d3m7s3tkc974sr23jmlzgq5zda4gtv8k9cy38756r9y3qgmkqkh7t5g"
   },
   {
     id: 4,
@@ -50,7 +54,8 @@ const mockNGOs = [
     image: "/api/placeholder/300/200",
     location: "Major cities and rural areas",
     urgency: "High",
-    impact: "3,800+ women and children helped"
+    impact: "3,800+ women and children helped",
+    walletAddress: "addr_test1qq8x9hu8j4ah3auytk0mwcaasvskugtaeer265rk9kwvutl3tkc974sr23jmlzgq5zda4gtv8k9cy38756r9y3qgmkqj9fks7"
   },
   {
     id: 5,
@@ -62,7 +67,8 @@ const mockNGOs = [
     image: "/api/placeholder/300/200",
     location: "Kerman, Hormozgan, Fars",
     urgency: "Critical",
-    impact: "15,000+ people relocated safely"
+    impact: "15,000+ people relocated safely",
+    walletAddress: "addr_test1qxw0djgj0x59ngrjvqthn7enhvruxnsavsw5th63la3mjel3tkc974sr23jmlzgq5zda4gtv8k9cy38756r9y3qgmkqmk2ql3"
   }
 ]
 
@@ -213,7 +219,7 @@ export default function DonatePage() {
                     step="0.000001"
                     value={donationAmount}
                     onChange={(e) => setDonationAmount(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                     placeholder="Enter amount in ADA"
                     min="1"
                   />
@@ -254,7 +260,7 @@ export default function DonatePage() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   placeholder="Leave a message for the NGO..."
                 />
               </div>
@@ -298,14 +304,16 @@ export default function DonatePage() {
                 </div>
               </div>
 
-              {/* Blockchain Transaction Component */}
-              <DonationTransaction
-                ngoAddress={`addr_test_${selectedNGO.name.toLowerCase().replace(/\s+/g, '_')}_wallet`}
-                donationAmount={donationAmount}
-                ngoName={selectedNGO.name}
-                onSuccess={handleDonationSuccess}
-                onError={handleDonationError}
-              />
+              {/* Smart Contract Donation Component */}
+              <div className="mb-6">
+                <SmartContractDonation
+                  ngoAddress={selectedNGO.walletAddress}
+                  donationAmount={donationAmount}
+                  ngoName={selectedNGO.name}
+                  onSuccess={handleDonationSuccess}
+                  onError={handleDonationError}
+                />
+              </div>
             </div>
 
             {/* Security Notice */}

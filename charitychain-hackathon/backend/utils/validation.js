@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
-// Cardano address validation regex (simplified)
-const CARDANO_ADDRESS_REGEX = /^addr_test[0-9a-z]{54,}$|^addr[0-9a-z]{54,}$/
+// Cardano address validation regex (flexible for all valid formats)
+const CARDANO_ADDRESS_REGEX = /^(addr_test1[0-9a-z]{90,}|addr1[0-9a-z]{90,}|stake_test1[0-9a-z]{50,}|stake1[0-9a-z]{50,})$/
 
 export const validateWalletAddress = (address) => {
   if (!address || typeof address !== 'string') {
